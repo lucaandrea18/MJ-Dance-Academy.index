@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MJ Dance Academy - Guida ai Passi</title>
+    <style>
+        :root {
+            --bg-dark: #05050a;
+            --panel-bg: #111322;
+            --gold: #fbbf24;
+            --gold-glow: #f59e0b;
+            --neon-blue: #38bdf8;
+            --neon-pink: #f43f5e;
+            --success: #22c55e;
+            --white: #ffffff;
+            --radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100vh;
+            justify-content: space-between;
+        }
+
+        header {
+            text-align: center;
+            background: rgba(17, 19, 34, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 14px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.1);
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold), #ffe4e6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* Area di Allenamento / Passo Corrente */
+        .dance-card {
+            background: var(--panel-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .move-number {
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--neon-blue);
+            letter-spacing: 1px;
+        }
+
+        .score-badge {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--gold);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border: 1px solid var(--gold);
+        }
+
+        .move-icon {
+            font-size: 4.5rem;
+            margin: 10px 0;
+            filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.4));
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .move-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .move-guide {
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            line-height: 1.4;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-left: 4px solid var(--neon-blue);
+            margin-bottom: 12px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .gesture-instruction {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Feedback di movimento */
+        .feedback-overlay {
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .feedback-overlay.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .feedback-perfect { color: var(--success); text-shadow: 0 0 12px var(--success); }
+        .feedback-good { color: var(--gold); text-shadow: 0 0 12px var(--gold); }
+        .feedback-miss { color: var(--neon-pink); }
+
+        /* Barra Sensore In Tempo Reale */
+        .sensor-bar-container {
+            width: 100%;
+            background: #1e293b;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .sensor-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--gold), var(--neon-pink));
+            transition: width 0.05s ease-out;
+        }
+
+        /* Pulsanti di Controllo */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-glow) 100%);
+            color: #000;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            background: #1e293b;
+            color: var(--white);
+            border: 1px solid #334155;
+            box-shadow: none;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        /* Modal Sensori */
+        .permission-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 10, 0.95);
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .permission-modal h2 {
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+
+        .permission-modal p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>MJ Dance Academy</h1>
+            <div class="subtitle">Guida ai Passi & Sensore di Movimento</div>
+        </header>
+
+        <!-- Scheda Passo e Guida -->
+        <div class="dance-card">
+            <div class="move-number" id="moveIndex">PASSO 1 / 5</div>
+            <div class="score-badge" id="scoreDisplay">PUNTI: 0</div>
+
+            <div class="move-icon" id="moveIcon">👞</div>
+            <div class="move-title" id="moveTitle">Il Moonwalk</div>
+            
+            <div class="move-guide" id="moveGuide">
+                Scivola all'indietro! Tieni il peso sul piede anteriore e fai scivolare la pianta dell'altro piede indietro.
+            </div>
+
+            <div class="gesture-instruction" id="gestureGuide">
+                📱 Tenendo il telefono in mano: effettua uno scatto indietro e verso il basso a ritmo!
+            </div>
+
+            <div class="feedback-overlay" id="feedback">PERFETTO!</div>
+
+            <div class="sensor-bar-container">
+                <div class="sensor-bar" id="sensorBar"></div>
+            </div>
+        </div>
+
+        <!-- Controlli dell'App -->
+        <div class="controls-panel">
+            <button class="btn" id="startBtn" onclick="toggleAcademy()">
+                ▶️ INIZIA ALLENAMENTO
+            </button>
+            
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="prevMove()">⏮️ Precedente</button>
+                <button class="btn btn-secondary" onclick="nextMove()">Prossimo ⏭️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Attivazione Sensori per iOS/Android -->
+    <div class="permission-modal" id="permModal">
+        <h2>Attiva i Sensori di Movimento</h2>
+        <p>Per guidarti nei passi e valutare i tuoi movimenti, l'app ha bisogno di accedere all'accelerometro del telefono.</p>
+        <button class="btn" onclick="requestSensorPermission()">ATTIVA SENSORE</button>
+    </div>
+
+    <script>
+        // Database dei passi di ballo guidati in italiano
+        const danceMoves = [
+            {
+                title: "Il Moonwalk",
+                icon: "👟",
+                guide: "Fai scivolare i piedi all'indietro mantenendo la punta del piede piegata e il tacco alzato alternando le gambe.",
+                gesture: "📱 Impulso indietro: Muovi il telefono con decisione verso di te a ritmo di musica.",
+                threshold: 14
+            },
+            {
+                title: "Spin & Hat Pose",
+                icon: "🎩",
+                guide: "Giro rapido su te stesso e stop immediato toccandoti il tesa del cappello o la testa con la mano destra.",
+                gesture: "📱 Rotazione rapida: Ruota il telefono in senso orario e bloccalo di colpo!",
+                threshold: 18
+            },
+            {
+                title: "Side Slide",
+                icon: "🕺",
+                guide: "Scivolata laterale fluida verso destra e sinistra mantenendo il busto inclinato.",
+                gesture: "📱 Spinta laterale: Muovi il telefono da sinistra a destra orizzontalmente.",
+                threshold: 12
+            },
+            {
+                title: "The Toe Stand",
+                icon: "🩰",
+                guide: "Alzati di colpo sulle punte dei piedi e blocca la posizione del corpo per un secondo!",
+                gesture: "📱 Scatto verso l'alto: Solleva il telefono velocemente verso l'alto e fermalo.",
+                threshold: 16
+            },
+            {
+                title: "Kick & Freeze",
+                icon: "👞",
+                guide: "Calcio frontale secco e posa finale con la mano sul fianco e il corpo inclinato.",
+                gesture: "📱 Affondo secco: Fai uno scatto in avanti secco con il telefono.",
+                threshold: 15
+            }
+        ];
+
+        let currentMoveIndex = 0;
+        let isTraining = false;
+        let score = 0;
+        let audioCtx = null;
+        let lastMotionTime = 0;
+
+        function updateMoveUI() {
+            const move = danceMoves[currentMoveIndex];
+            document.getElementById('moveIndex').innerText = `PASSO ${currentMoveIndex + 1} / ${danceMoves.length}`;
+            document.getElementById('moveIcon').innerText = move.icon;
+            document.getElementById('moveTitle').innerText = move.title;
+            document.getElementById('moveGuide').innerText = move.guide;
+            document.getElementById('gestureGuide').innerText = move.gesture;
+        }
+
+        function nextMove() {
+            currentMoveIndex = (currentMoveIndex + 1) % danceMoves.length;
+            updateMoveUI();
+        }
+
+        function prevMove() {
+            currentMoveIndex = (currentMoveIndex - 1 + danceMoves.length) % danceMoves.length;
+            updateMoveUI();
+        }
+
+        // Sintetizzatore Audio Integrato per Suoni e Musica Ritmica
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(freq, type, duration) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function showFeedback(text, typeClass) {
+            const fb = document.getElementById('feedback');
+            fb.innerText = text;
+            fb.className = `feedback-overlay active ${typeClass}`;
+            setTimeout(() => {
+                fb.className = 'feedback-overlay';
+            }, 800);
+        }
+
+        // Gestione Sensori di Movimento
+        function handleMotion(event) {
+            if (!isTraining) return;
+
+            const acc = event.accelerationIncludingGravity || event.acceleration;
+            if (!acc) return;
+
+            // Calcolo dell'intensità del movimento (vettore accelerazione)
+            const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+            const currentThreshold = danceMoves[currentMoveIndex].threshold;
+
+            // Aggiorna la barra visiva del sensore
+            const barWidth = Math.min(100, (magnitude / 25) * 100);
+            document.getElementById('sensorBar').style.width = `${barWidth}%`;
+
+            const now = Date.now();
+            // Evita rilevamenti multipli in un millisecondo
+            if (magnitude > currentThreshold && (now - lastMotionTime > 1000)) {
+                lastMotionTime = now;
+                
+                if (magnitude > currentThreshold + 6) {
+                    score += 100;
+                    showFeedback("PERFETTO! 🌟", "feedback-perfect");
+                    playSound(587.33, 'triangle', 0.2); // D5
+                } else {
+                    score += 50;
+                    showFeedback("OTTIMO! 👍", "feedback-good");
+                    playSound(440, 'sine', 0.15); // A4
+                }
+
+                document.getElementById('scoreDisplay').innerText = `PUNTI: ${score}`;
+            }
+        }
+
+        function toggleAcademy() {
+            initAudio();
+            
+            // Richiesta permessi iOS 13+
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission().then(response => {
+                    if (response === 'granted') {
+                        startSession();
+                    } else {
+                        alert("Permesso sensori negato. Impossibile rilevare i movimenti.");
+                    }
+                }).catch(() => {
+                    document.getElementById('permModal').style.display = 'flex';
+                });
+            } else {
+                startSession();
+            }
+        }
+
+        function requestSensorPermission() {
+            document.getElementById('permModal').style.display = 'none';
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission().then(response => {
+                    if (response === 'granted') startSession();
+                });
+            } else {
+                startSession();
+            }
+        }
+
+        function startSession() {
+            isTraining = !isTraining;
+            const btn = document.getElementById('startBtn');
+            
+            if (isTraining) {
+                btn.innerText = "⏹️ PAUSA ALLENAMENTO";
+                btn.style.background = "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)";
+                btn.style.color = "#fff";
+                window.addEventListener('devicemotion', handleMotion);
+                playSound(523.25, 'sine', 0.3);
+            } else {
+                btn.innerText = "▶️ RIPRENDI ALLENAMENTO";
+                btn.style.background = "linear-gradient(135deg, var(--gold) 0%, var(--gold-glow) 100%)";
+                btn.style.color = "#000";
+                window.removeEventListener('devicemotion', handleMotion);
+            }
+        }
+
+        updateMoveUI();
+    </script>
+</body>
+</html>
